@@ -1,0 +1,40 @@
+# Decision Rain Library Project
+
+> Turn interesting links into decision notes with Raindrop and an AI assistant.
+
+Canonical page: https://xxyoudeadpunkxx.github.io/decision-rain-library-project/
+Repository: https://github.com/XxYouDeaDPunKxX/decision-rain-library-project
+License: CC BY-SA 4.0
+
+## What this is
+
+Decision Rain Library Project is a lightweight decision-library template for people who save repos, tools, docs, articles, products, directories, and research sparks before they know what is worth adopting.
+
+The project uses Raindrop as the saved-link backend and an AI assistant as a review helper. The assistant may preserve, inspect, research, and propose; the operator decides final placement, tags, promotion, archive, and taxonomy changes.
+
+## Core loop
+
+1. Save the original link to 00_INBOX.
+2. Inspect the page, repo, docs, or available evidence.
+3. Produce a short review with verdict, next step, claim, evidence, authority, confidence state, risk, and practical fit.
+4. Operator validates the judgment.
+5. Move the item to 10_REVIEW, 20_LIBRARY, or 90_ARCHIVE.
+
+## Public surface
+
+This GitHub Pages artifact is a single human-facing project overview page plus machine-readable discovery files. It is not the private Raindrop corpus.
+
+## Safe public material
+
+- schema and rules
+- blank templates
+- synthetic examples
+- placeholder SYSTEM URLs
+- public documentation explaining the operating model
+
+## Unsafe material
+
+- private Raindrop exports
+- personal saved links with notes
+- credentials, connector tokens, cookies, or account identifiers
+- assistant transcripts containing private decisions

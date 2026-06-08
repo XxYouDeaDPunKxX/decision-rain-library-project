@@ -1,0 +1,40 @@
+{
+  "name": "Decision Rain Library Project",
+  "alternateName": "Decision Rain",
+  "description": "A lightweight decision-library template for turning saved links into evidence-aware decision notes with Raindrop, AI assistants, and human approval.",
+  "type": "GitHub Pages project page",
+  "pagesType": "PROJECT_SITE",
+  "owner": "XxYouDeaDPunKxX",
+  "repo": "decision-rain-library-project",
+  "sourceBranch": "gh-pages",
+  "sourcePath": "/",
+  "customDomain": null,
+  "siteRoot": "https://xxyoudeadpunkxx.github.io/decision-rain-library-project/",
+  "domainRoot": "https://xxyoudeadpunkxx.github.io/",
+  "discoveryRoot": "https://xxyoudeadpunkxx.github.io/decision-rain-library-project/",
+  "currentPageUrl": "https://xxyoudeadpunkxx.github.io/decision-rain-library-project/",
+  "repository": "https://github.com/XxYouDeaDPunKxX/decision-rain-library-project",
+  "license": "CC BY-SA 4.0",
+  "primaryAudience": [
+    "people who save many links",
+    "AI-assisted workflow operators",
+    "tool/repo/research triagers"
+  ],
+  "publicRole": "single-page project overview and orientation surface",
+  "machineFiles": {
+    "llms": "https://xxyoudeadpunkxx.github.io/decision-rain-library-project/llms.txt",
+    "rawManifest": "https://xxyoudeadpunkxx.github.io/decision-rain-library-project/raw-manifest.json",
+    "sitemap": "https://xxyoudeadpunkxx.github.io/decision-rain-library-project/sitemap.xml",
+    "robots": "https://xxyoudeadpunkxx.github.io/decision-rain-library-project/robots.txt"
+  },
+  "canonicalPages": [
+    "https://xxyoudeadpunkxx.github.io/decision-rain-library-project/"
+  ],
+  "notIncluded": [
+    "private Raindrop corpus",
+    "real operator saved-link notes",
+    "credentials",
+    "connector tokens",
+    "personal decision history"
+  ]
+}

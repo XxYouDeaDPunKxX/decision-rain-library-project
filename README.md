@@ -178,11 +178,104 @@ See `LICENSE`.
 <details>
 <summary>🛠️ Technical notes</summary>
 
-## Technical Notes
+## 🧰 Technical Notes
 
-Raindrop requires every bookmark to have a URL. The SYSTEM documents can use placeholder URLs because the useful content lives in the bookmark excerpt.
+This repository is a portable governance package for a link-decision library. It is not an application, package, plugin, or automation framework. The runtime is the combination of:
 
-The assistant should read SYSTEM entries from Raindrop before doing serious review work. The intended read order is:
+- Raindrop as the bookmark and collection backend;
+- SYSTEM documents stored as governance entries;
+- a human operator as the only validation authority;
+- an AI assistant or connector that can preserve, inspect, research, and propose;
+- external evidence sources used to evaluate saved links.
+
+🎯 The main design goal is not knowledge capture. The goal is to preserve signals and turn them into reviewed decisions without letting the assistant silently convert guesses into canonical library state.
+
+### 🗂️ Repository Surface
+
+The repository contains the public skeleton of the system:
+
+```text
+README.md                         human-facing overview and setup
+docs/00_AGENT_CONTRACT.md          assistant authority, gates, failure rules
+docs/01_SYSTEM_SPEC.md             collection model and ingestion flow
+docs/02_TAG_REGISTRY.md            controlled tag grammar and StackFit model
+docs/03_DECISION_RULES.md          status, truth, authority, fit, and next rules
+docs/04_NOTE_TEMPLATE.md           canonical evaluated-entry note shape
+docs/05_EXAMPLES_GOLDEN.md         drift-prevention examples
+docs/06_USAGE_FLOW.md              day-to-day operating loop
+examples/sample-entry.md           sample evaluated entry
+templates/collection-structure.md  Raindrop collection layout
+templates/system-bookmark-links.md placeholder URL pattern for SYSTEM entries
+```
+
+There is intentionally no CI, build system, package manifest, deployment workflow, or GitHub Pages surface. Maintainers should not add these unless the project grows a real executable or site surface that justifies them.
+
+### 🧱 Runtime Data Model
+
+The live system is expected to exist inside Raindrop, not inside GitHub.
+
+A normal decision entry is a Raindrop bookmark with:
+
+- the original URL as the durable trace;
+- one collection representing its lifecycle state;
+- controlled tags representing source, type, domain, authority, truth, status, risk, fit, scenario, priority, and next action;
+- a compact note or excerpt containing `Cataloged`, `Verdict`, `Next`, `Claim`, `Evidence`, `Authority`, `Truth`, and `StackFit`.
+
+The GitHub repository provides the schema, rules, and seed documents. It does not contain the operator's private bookmark corpus.
+
+A SYSTEM entry is different from a normal bookmark. It is a governance document stored inside the `00_SYSTEM` collection. Because Raindrop requires every bookmark to have a URL, SYSTEM entries may use stable placeholder URLs. For SYSTEM entries, the bookmark excerpt or note is the source of truth; the placeholder URL is only an addressable shell.
+
+### 🔁 Collection State Machine
+
+Collections are lifecycle states, not topical folders.
+
+```text
+00_SYSTEM  -> governance documents only
+00_INBOX   -> preserved but not evaluated
+10_REVIEW  -> analyzed or worth analysis, not necessarily validated
+20_LIBRARY -> evaluated and operator-validated decisions
+90_ARCHIVE -> rejected, obsolete, duplicated, inactive, or historical entries
+```
+
+Every new external signal starts in `00_INBOX`. This preserves the trace before analysis and prevents the assistant from pretending that capture equals classification.
+
+The normal state transition is:
+
+```text
+signal -> 00_INBOX -> analysis proposal -> operator validation -> 10_REVIEW / 20_LIBRARY / 90_ARCHIVE
+```
+
+A direct write into `20_LIBRARY` is only valid after explicit operator validation. Previous similar approval, high assistant confidence, clean formatting, or strong source evidence do not count as validation.
+
+### 🛡️ Authority Boundaries
+
+⚖️ The assistant has proposal authority, not validation authority.
+
+It may:
+
+- preserve a new link;
+- inspect official and community evidence;
+- identify missing evidence;
+- propose tags, collection, verdict, next action, risks, and alternatives;
+- surface taxonomy gaps;
+- recommend a decision path.
+
+It may not, without operator approval:
+
+- mark a decision as canonical;
+- promote an entry into `20_LIBRARY`;
+- archive an entry;
+- change SYSTEM documents;
+- create or use new tag values;
+- normalize batches;
+- overwrite existing decision notes;
+- treat silence as approval.
+
+This boundary is the core safety property of the project. Maintainers should preserve it even if they add automation later.
+
+### 📚 Required SYSTEM Read Order
+
+Before serious classification, update, normalization, or promotion, the assistant should read the SYSTEM entries in this order:
 
 ```text
 00_AGENT_CONTRACT
@@ -194,10 +287,138 @@ The assistant should read SYSTEM entries from Raindrop before doing serious revi
 06_USAGE_FLOW
 ```
 
-If the assistant cannot read the SYSTEM entries, it should stop and ask for access instead of guessing the rules.
+`00_AGENT_CONTRACT` comes first because it defines authority boundaries and stop conditions. The tag registry and decision rules must be read before assigning final tags. Golden examples should be used to prevent taxonomy drift.
 
-If you use remote MCP or a custom connector, the connector description should only bootstrap the assistant. The real rules should live in `00_SYSTEM`.
+If the assistant cannot read SYSTEM entries from Raindrop, it should stop and report the access failure. It should not reconstruct rules from memory, repo names, README fragments, connector descriptions, or similar prior systems.
 
-Keep private bookmark data out of this repository. This repository is only the skeleton and template.
+### 🏷️ Controlled Taxonomy
+
+Tags are a constrained grammar, not free-form labels. The current approved families are:
+
+```text
+authority/* truth/* status/* type/* domain/* source/* scenario/* risk/* stack/* fit/* next/* priority/*
+```
+
+The system intentionally separates concerns:
+
+- `source/*` describes where the item came from;
+- `type/*` describes what kind of object it is;
+- `authority/*` describes what supports the claim;
+- `truth/*` describes confidence or evidence state;
+- `status/*` describes operational decision state;
+- `fit/*` describes practical compatibility with the operator's environment;
+- `next/*` describes the concrete next action.
+
+Do not collapse these into vague tags such as `interesting`, `good`, `AI`, or `tool`. Do not use `priority/high` as a substitute for status or next action. Do not treat GitHub as a fit judgment; GitHub is a source. Do not use Raindrop as a fit tag; Raindrop is the backend.
+
+New tag values are allowed only through explicit operator approval. When a gap appears, the assistant should report the smallest proposed addition and wait before using it.
+
+### 🔍 Evidence Model
+
+The assistant should keep official and community evidence separate.
+
+Official evidence includes documentation, README claims, source code, examples, tests, release notes, pricing pages, maintainer notes, and product pages.
+
+Community evidence includes issues, discussions, forum reports, Reddit/HN signals, adoption friction, setup failures, pricing complaints, and breakage reports.
+
+Official evidence describes intended behavior. Community evidence reveals operational friction. A useful decision note should not blur those two. If they conflict, the conflict must be surfaced before a verdict.
+
+Truth states should follow the controlled vocabulary:
+
+```text
+truth/verified    primary evidence, working test, or strong corroboration
+truth/plausible   likely true but not tested enough
+truth/claimed     asserted but not verified
+truth/conflicting credible sources disagree
+truth/outdated    likely stale or obsolete
+truth/unknown     insufficient evidence
+```
+
+### 🧩 StackFit Model
+
+StackFit is a practical adoption judgment. It is not a list of the operator's tools.
+
+A StackFit assessment should consider:
+
+- value type: direct use, assisted implementation, integration, extraction, reference, discovery;
+- operator capability: local workstation, editor, AI assistants, GitHub, automation layers, and supported connectors;
+- adoption cost: dependencies, accounts, APIs, frameworks, unfamiliar ecosystems, billing, payment cards, maintenance;
+- friction threshold: documented setup, real free tier, no-card use, account requirements, fake freemium, enterprise assumptions;
+- decision path: use, test, spike, extract, reference, watch, revisit, deploy, archive.
+
+Bad implementation fit does not automatically make an item worthless. It may still be `status/core-good` with `next/extract`, or `status/reference` with `next/revisit`. Conversely, a polished project is not `status/ready` unless StackFit is acceptable and the operator validates it.
+
+### 📝 Note Format Contract
+
+Evaluated entries use the compact note format in `docs/04_NOTE_TEMPLATE.md`.
+
+`Verdict` and `Next` must appear near the top because Raindrop may truncate long excerpts. The note should optimize for later retrieval and decision recall, not for essay-style explanation.
+
+The key invariant is:
+
+```text
+Claim != Evidence != Verdict
+```
+
+The claim states what the item appears to provide. Evidence states what supports or weakens the claim. Verdict states the practical judgment after considering authority, truth, risk, and StackFit.
+
+### 🔌 Connector And MCP Behavior
+
+A connector description should only bootstrap the assistant. It should not contain the full operating system. The canonical rules should live in `00_SYSTEM` so they can be inspected, versioned, corrected, and reused.
+
+A minimal connector instruction should tell the assistant to:
+
+1. treat Raindrop as the Decision Library backend;
+2. save new links to `00_INBOX` first;
+3. read `00_SYSTEM` before serious work;
+4. propose but not validate;
+5. ask before moving, archiving, normalizing, or changing taxonomy.
+
+Connector implementations should be conservative about writes. Prefer a preserved pending entry over an overconfident classified entry. When read/write APIs are unreliable, report what was read, what was changed, and what still requires operator review.
+
+### 🛠️ Maintenance And Extension Rules
+
+Maintainers should preserve the smallest useful surface.
+
+Good extensions include:
+
+- additional golden examples for recurring classification patterns;
+- small approved additions to tag values;
+- clearer failure rules for a specific connector;
+- improved note templates that keep the anti-truncation rule;
+- migration notes when changing SYSTEM behavior.
+
+Avoid adding:
+
+- broad placeholder docs;
+- generic community files with no operating need;
+- CI for a Markdown-only repository;
+- Pages unless there is a real documentation-site requirement;
+- automation that bypasses operator validation;
+- uncontrolled tags that make retrieval worse.
+
+For batch normalization, define the exact target collections, fields to change, fields to preserve, sample transformation, and rollback risk before touching entries. Batch normalization should be rare, explicit, and traceable.
+
+### 🔒 Privacy And Publication Boundary
+
+This repository should not contain private bookmark data, saved-link notes, operator history, credentials, connector tokens, exports, or personal decision corpora.
+
+Safe public material:
+
+- schema and rules;
+- blank templates;
+- synthetic examples;
+- placeholder SYSTEM URLs;
+- documentation explaining the operating model.
+
+Unsafe material:
+
+- real private Raindrop exports;
+- personal saved links with notes;
+- assistant transcripts containing private decisions;
+- API keys, connector credentials, cookies, or account identifiers;
+- unpublished operator-specific taxonomy that exposes private workflows.
+
+🧭 The repository is the skeleton. The live library is the private Raindrop corpus.
 
 </details>
